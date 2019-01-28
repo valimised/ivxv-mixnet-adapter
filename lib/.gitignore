@@ -1,0 +1,4 @@
+*.jar
+*.so
+*.so.0.0.0
+ivxv-version.gradle
