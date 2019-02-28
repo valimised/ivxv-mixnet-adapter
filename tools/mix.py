@@ -232,7 +232,7 @@ def run(args):
 
 
 def pack_proof(zip, pubkey, ballots, shuffled):
-    z = zipfile.ZipFile(zip, "w")
+    z = zipfile.ZipFile(zip, "w", allowZip64=True)
     z.write("prot.xml")
     z.write(pubkey, "Publickey.pem")
     z.write(ballots, "BallotBox.json")
