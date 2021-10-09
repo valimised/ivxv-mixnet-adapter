@@ -362,25 +362,24 @@ def parse_der(der, depth=0, ret=True):
     fields = []
     while pointer < len(der):
         field = asn_field()
-        field.cla = table_cla[(ord(der[pointer]) & 0xc0) >> 6]
-        field.constr = table_constructed[(ord(der[pointer]) & 0x20) >> 5]
-        if (ord(der[pointer]) & 0xc0) >> 6 == 2:
-            field.tag = ord(der[pointer]) & 0x1f
+        field.cla = table_cla[(der[pointer] & 0xc0) >> 6]
+        field.constr = table_constructed[(der[pointer] & 0x20) >> 5]
+        if (der[pointer] & 0xc0) >> 6 == 2:
+            field.tag = der[pointer] & 0x1f
         else:
-            field.tag = table_tag.get(ord(der[pointer]) & 0x1f, "[%d]" %
-                                      (ord(der[pointer]) & 0x1f))
-        blocks = (ord(der[pointer + 1]) & 0x7f) if ord(
-            der[pointer + 1]) & 0x80 else 0
+            field.tag = table_tag.get(der[pointer] & 0x1f, "[%d]" %
+                                      (der[pointer] & 0x1f))
+        blocks = (der[pointer + 1] & 0x7f) if der[pointer + 1] & 0x80 else 0
         field.lenblocks = blocks
-        recurse = True if ord(der[pointer]) & 0x20 else False
+        recurse = True if der[pointer] & 0x20 else False
         if blocks == 0:
-            length = ord(der[pointer + 1]) & 0x7f
+            length = der[pointer + 1] & 0x7f
         else:
             length = 0
         pointer += 2
         while blocks:
             length <<= 8
-            length |= ord(der[pointer])
+            length |= der[pointer]
             pointer += 1
             blocks -= 1
         field.length = length

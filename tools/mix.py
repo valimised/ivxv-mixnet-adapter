@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/python3
 
 # Copyright (C) 2019 State Electoral Office
 #
@@ -37,7 +37,8 @@ KEYWIDTH = 5
 ENTROPY_THRES = 40
 
 log = logging.getLogger("runner")
-logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s:%(levelname)s %(message)s')
 
 
 def random_source():
@@ -71,7 +72,6 @@ def get_keywidth():
 def vog(args):
     return [
         "java",
-        "-d64",
         "-Djava.security.egd=file:/dev/./urandom",
         "com.verificatum.ui.gen.GeneratorTool",
         "vog",
@@ -85,7 +85,6 @@ def vmnv(args):
     return [
         "java",
         "-server",
-        "-d64",
         "-Xmx3000m",
         "-Djava.security.egd=file:/dev/./urandom",
         "com.verificatum.protocol.mixnet.MixNetElGamalVerifyFiatShamirTool",
@@ -98,7 +97,6 @@ def vmnv(args):
 def vmni(args):
     return [
         "java",
-        "-d64",
         "-Djava.security.egd=file:/dev/./urandom",
         "com.verificatum.ui.info.InfoTool",
         "vmni",
@@ -111,7 +109,6 @@ def vmni(args):
 def vmnc(args):
     return [
         "java",
-        "-d64",
         "-Xmx3000m",
         "-Djava.security.egd=file:/dev/./urandom",
         "com.verificatum.protocol.elgamal.ProtocolElGamalInterfaceTool",
@@ -125,7 +122,6 @@ def vmnc(args):
 def vmn(args):
     return [
         "java",
-        "-d64",
         "-Xmx3000m",
         "-Djava.security.egd=file:/dev/./urandom",
         "com.verificatum.protocol.mixnet.MixNetElGamalTool",
@@ -136,12 +132,12 @@ def vmn(args):
 
 def parse_key(pubkey):
     pem = open(pubkey).readlines()[1:-1]
-    der = base64.decodestring("".join(pem))
+    der = base64.decodebytes(("".join(pem)).encode('ascii'))
     a = asn1.parse_der(der)
-    P = a[0][0][1][0].value.encode('hex')
-    G = a[0][0][1][1].value.encode('hex')
+    P = a[0][0][1][0].value.hex()
+    G = a[0][0][1][1].value.hex()
     election = a[0][0][1][2].value
-    filtered_election = filter_election_id(election)
+    filtered_election = filter_election_id(election).decode('ascii')
     log.debug("parsed public key")
     log.debug("P = %s\nG = %s\nelection_id = %s\nfiltered_id = %s", P, G,
               election, filtered_election)
@@ -149,11 +145,10 @@ def parse_key(pubkey):
 
 
 def filter_election_id(election):
-    first = range(ord('a'), ord('z')) + range(ord('A'), ord('Z'))
-    second = first + range(ord('0'), ord('9')) + [ord('_'), ord(' ')]
-    first, second = map(chr, first), map(chr, second)
+    first = [*range(ord('a'), ord('z')), *range(ord('A'), ord('Z'))]
+    second = first + [*range(ord('0'), ord('9'))] + [ord('_'), ord(' ')]
     repl = '_'
-    ret = list(election)
+    ret = election
     if len(ret) == 0:
         return ''
     if ret[0] not in first:
@@ -163,7 +158,7 @@ def filter_election_id(election):
     for i in range(1, len(ret[1:])):
         if ret[i] not in second:
             ret[i] = repl
-    return "".join(ret)[:256]
+    return ret[:256]
 
 
 def remove_old_source_and_seed():
@@ -184,9 +179,9 @@ def remove_old_source_and_seed():
 
 def write_seed(election):
     f = tempfile.NamedTemporaryFile()
-    towrite = election.encode('hex')
-    f.file.write(towrite)
-    f.file.write((64-len(towrite)) * "0")
+    towrite = election.encode('ascii').hex()
+    f.file.write(towrite.encode('ascii'))
+    f.file.write((64-len(towrite)) * b"0")
     f.file.flush()
     log.debug("wrote seed to %s", f.name)
     return f
@@ -228,7 +223,7 @@ def run(args):
     log.debug("running cmd: %s", " ".join(args))
     ret = subprocess.check_output(args, env=get_env())
     log.debug("cmd output: %s", ret)
-    return ret
+    return ret.decode('ascii')
 
 
 def pack_proof(zip, pubkey, ballots, shuffled):
@@ -254,7 +249,7 @@ def pack_proof(zip, pubkey, ballots, shuffled):
 def parse_args(argv):
     parser = argparse.ArgumentParser(
         description="Runner script for running Verificatum mix-net")
-    parser.add_argument("command", choices = ['shuffle', 'verify'],
+    parser.add_argument("command", choices=['shuffle', 'verify'],
                         help="Action to take")
     parser.add_argument("--pubkey",
                         help="Location of the public key in PEM format")
@@ -262,9 +257,9 @@ def parse_args(argv):
                         help="Location of the ballot box to be shuffled")
     parser.add_argument("--shuffled",
                         help="Output location of the shuffled ballot box")
-    parser.add_argument("--no-user-entropy",
-                        help="Omit cleaning entropy pool and requesting "
-                        "entropy from the user (for automated testing)",
+    parser.add_argument("--empty-entropy-pool",
+                        help="Clean entropy pool and request entropy from "
+                        "the user",
                         action="store_true")
     parser.add_argument("--proof-zipfile",
                         help="Add all artefacts for verifying the "
@@ -275,7 +270,7 @@ def parse_args(argv):
     return parsed
 
 
-def mix(pubkey, bbox, out, skipentropy=False):
+def mix(pubkey, bbox, out, emptyentropypool=False):
     log.info("Parsing public key")
     election, params = parse_key(pubkey)
     # remove old .verificatum_random_source and .verificatum_random_seed
@@ -292,7 +287,7 @@ def mix(pubkey, bbox, out, skipentropy=False):
     log.info("Initializing Verificatum random source")
     run(vog(["-rndinit", "-seed", seedfile.name, "PRGCombiner", prg_desc,
              urandom_desc]))
-    if not skipentropy:
+    if emptyentropypool:
         # read /dev/random until empty
         log.info("Emptying entropy pool")
         empty_entropy_pool()
@@ -346,7 +341,7 @@ if __name__ == "__main__":
         verify(args.proof_zipfile)
     else:
         mix(args.pubkey, args.ballotbox, args.shuffled,
-            skipentropy=args.no_user_entropy)
+            emptyentropypool=args.empty_entropy_pool)
         log.info("Mixing finished.  Shuffled ballot box is located at {}".
                  format(args.shuffled))
         if args.proof_zipfile is not None:

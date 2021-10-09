@@ -3,9 +3,9 @@ apply plugin: 'java'
 apply from: "lib/ivxv-version.gradle"
 
 dependencies {
-    compile files("lib/ivxv-common-${project.version}.jar",
-                  "lib/ivxv-common-${project.version}-all.jar",
-                  "lib/verificatum-vmgj-3.0.3.jar",
-                  "lib/verificatum-vcr-vmgj-3.0.3.jar",
-                  "lib/verificatum-vmn-3.0.3.jar")
+    implementation files("lib/ivxv-common-${project.version}.jar",
+                         "lib/ivxv-common-${project.version}-all.jar",
+                         "lib/verificatum-vmgj-1.2.2.jar",
+                         "lib/verificatum-vcr-vmgj-3.0.4.jar",
+                         "lib/verificatum-vmn-3.0.4.jar")
 }
