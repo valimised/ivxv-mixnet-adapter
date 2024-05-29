@@ -17,9 +17,9 @@ compiled as needed. For that, the following assumptions are made:
 * gradle is installed
 * IVXV repository is stored at `../ivxv/`
 
-* Verificatum GMPMEE repository is stored at `../gmpmee/`. To checkout, run::
+* Verificatum GMPMEE repository is stored at `../verificatum-gmpmee/`. To checkout, run::
 
-    git clone https://github.com/verificatum/verificatum-gmpmee gmpmee
+    git clone https://github.com/verificatum/verificatum-gmpmee
 
 * Verificatum VMGJ repository is stored at `../vmgj/`. To checkout, run::
 
@@ -32,6 +32,8 @@ compiled as needed. For that, the following assumptions are made:
 * Verificatum VMN repository is stored at `../vmn/`. To checkout, run::
 
     git clone https://github.com/verificatum/vmn
+
+Use `get_verificatum.sh` script to clone verificatum libraries.
 
 Building
 --------

@@ -1,4 +1,5 @@
 VER := $(shell head -n1 ../ivxv/debian/changelog | cut -d" " -f2 | sed "s/(//" | sed "s/)//" )
+GRADLE_VER := $(shell ls ../ivxv/common/external | grep gradle | cut -d"-" -f2)
 
 .PHONY: all
 all: zip
@@ -42,15 +43,15 @@ lib/ivxv-version.gradle:
 	echo "version \"$(VER)\"" > lib/ivxv-version.gradle
 
 lib/ivxv-verificatum-$(VER).jar: lib/verificatum-vmn-3.0.4.jar lib/ivxv-common-$(VER).jar lib/ivxv-common-$(VER)-all.jar lib/ivxv-version.gradle
-	../ivxv/common/external/gradle-6.4/bin/gradle jar
+	../ivxv/common/external/gradle-$(GRADLE_VER)/bin/gradle jar
 	cp build/libs/ivxv-verificatum-$(VER).jar lib/ivxv-verificatum-$(VER).jar
 
 lib/ivxv-common-$(VER).jar:
-	../ivxv/common/external/gradle-6.4/bin/gradle -b ../ivxv/common/java/build.gradle jar
+	../ivxv/common/external/gradle-$(GRADLE_VER)/bin/gradle -b ../ivxv/common/java/build.gradle jar
 	cp ../ivxv/common/java/build/libs/common-$(VER).jar lib/ivxv-common-$(VER).jar
 
 lib/ivxv-common-$(VER)-all.jar:
-	../ivxv/common/external/gradle-6.4/bin/gradle -b ../ivxv/common/java/build.gradle jarall
+	../ivxv/common/external/gradle-$(GRADLE_VER)/bin/gradle -b ../ivxv/common/java/build.gradle jarall
 	cp ../ivxv/common/java/build/libs/common-$(VER)-all.jar lib/ivxv-common-$(VER)-all.jar
 
 lib/libgmpmee.so.0.0.0:
@@ -105,7 +106,7 @@ clean:
 	rm -f lib/libgmpmee.so.0.0.0
 	rm -f lib/libvmgj-1.2.2.so
 	rm -f lib/ivxv-verificatum-$(VER).jar
-	../ivxv/common/external/gradle-6.4/bin/gradle clean
+	../ivxv/common/external/gradle-$(GRADLE_VER)/bin/gradle clean
 	rm -f lib/ivxv-version.gradle
 	$(MAKE) -C ../vmn clean
 	$(MAKE) -C ../vmn -f Makefile.build clean
